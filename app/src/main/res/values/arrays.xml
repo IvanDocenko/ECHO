@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="prompts">
+        <item>What surprised you today?</item>
+        <item>What will you thank yourself for in a year?</item>
+        <item>What made today different from yesterday?</item>
+        <item>Who did you think about today?</item>
+        <item>What small thing are you grateful for?</item>
+        <item>What did you learn today?</item>
+        <item>What would you tell yourself one year ago?</item>
+        <item>What are you looking forward to tomorrow?</item>
+        <item>What sound will remind you of today?</item>
+        <item>What made you smile today?</item>
+        <item>What was hard today, and how did you get through it?</item>
+        <item>What place will you remember from today?</item>
+        <item>What did you eat today that you loved?</item>
+        <item>What song fits your day?</item>
+        <item>What are you proud of today?</item>
+        <item>What would you do differently if today repeated?</item>
+        <item>Who made your day better?</item>
+        <item>What are you worried about right now?</item>
+        <item>What made you laugh?</item>
+        <item>What did you finish today?</item>
+        <item>What did you start today?</item>
+        <item>What are you curious about tonight?</item>
+        <item>What weather matches your mood?</item>
+        <item>What did your body feel today — tired, light, strong?</item>
+        <item>What word describes today in one breath?</item>
+        <item>Who would you call right now if you could?</item>
+        <item>What dream did you have last night?</item>
+        <item>What kindness did you witness today?</item>
+        <item>What are you letting go of tonight?</item>
+        <item>What do you want future-you to remember about this week?</item>
+        <item>What made time fly today?</item>
+        <item>What question are you carrying into tomorrow?</item>
+    </string-array>
+</resources>

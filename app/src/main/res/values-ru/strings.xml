@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ECHO</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_record">Запись</string>
+    <string name="nav_feed">Лента</string>
+    <string name="nav_letter">Письмо</string>
+    <string name="nav_year">Год</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Record -->
+    <string name="record_title_idle">Как прошёл твой день?</string>
+    <string name="record_title_recording">Слушаю тебя…</string>
+    <string name="record_subtitle_idle">30–120 секунд для себя из будущего</string>
+    <string name="record_saving">Сохраняю эхо…</string>
+    <string name="record_error_short">Запись слишком короткая</string>
+    <string name="record_error_start">Не удалось начать запись</string>
+    <string name="record_error_save">Не удалось сохранить запись</string>
+    <string name="record_cd_record">Записать</string>
+    <string name="record_cd_stop">Остановить</string>
+
+    <!-- Feed -->
+    <string name="feed_empty">Пока тишина.\nЗапиши первое эхо — оно вернётся через год.</string>
+    <string name="cd_play">Слушать</string>
+    <string name="cd_pause">Пауза</string>
+    <string name="cd_delete">Удалить</string>
+
+    <!-- Letter -->
+    <string name="letter_loading">Открываю конверт…</string>
+    <string name="letter_exactly_year_ago">Ровно год назад</string>
+    <string name="letter_you_recorded">ты записал(а) это. Слушай.</string>
+    <string name="letter_listen">Слушать</string>
+    <string name="letter_duration">Длительность: %1$s</string>
+    <string name="letter_empty_title">Год назад в этот день\nзаписей не было</string>
+    <string name="letter_empty_subtitle">Запиши сегодняшний день — через год здесь появится письмо.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_theme">Тема</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="settings_reminder">Ежедневное напоминание</string>
+    <string name="settings_time">Время: %1$s</string>
+    <string name="settings_hour">Час: %1$d</string>
+    <string name="settings_minute">Минуты: %1$d</string>
+    <string name="settings_language">Язык</string>
+    <string name="lang_en">English</string>
+    <string name="lang_ru">Русский</string>
+    <string name="settings_offline_note">Эхо работает полностью офлайн: записи хранятся только на этом телефоне.</string>
+
+    <!-- About -->
+    <string name="settings_about">О приложении</string>
+    <string name="about_description">Эхо — голосовой дневник времени. Минута в день о том, как всё прошло — и ровно через год приложение вернёт тебе твой голос, как письмо из прошлого.</string>
+    <string name="about_developer">Разработчик</string>
+    <string name="about_developer_name">Lunarium Studio</string>
+    <string name="about_version">Версия</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_start">Начать</string>
+    <string name="onboarding_1_title">Голосовой дневник времени</string>
+    <string name="onboarding_1_text">Каждый вечер оставляй себе 30–120 секунд голоса: как прошёл день, о чём думаешь, что чувствуешь.</string>
+    <string name="onboarding_2_title">Эхо вернётся через год</string>
+    <string name="onboarding_2_text">Ровно через год, в тот же день, приложение напомнит и сыграет твою запись. Разговор с собой прошлым.</string>
+    <string name="onboarding_3_title">Только ты и твой телефон</string>
+    <string name="onboarding_3_text">Никаких аккаунтов и серверов. Записи хранятся на устройстве — твоё личное письмо в будущее.</string>
+
+    <!-- Notifications -->
+    <string name="channel_anniversary">Письма из прошлого</string>
+    <string name="channel_anniversary_desc">Записи, которые ты оставил себе год назад</string>
+    <string name="channel_reminder">Ежедневное напоминание</string>
+    <string name="channel_reminder_desc">Напоминание записать голосовой дневник</string>
+    <string name="notif_anniversary_title">Письмо из прошлого</string>
+    <string name="notif_anniversary_text">Ровно год назад ты записал(а) это. Нажми, чтобы послушать.</string>
+    <string name="notif_reminder_title">ECHO</string>
+    <string name="notif_reminder_text">Как прошёл твой день? Оставь 30 секунд для себя из будущего.</string>
+    <string name="notif_weekly_title">Запись недели</string>
+    <string name="notif_weekly_text">Случайная запись из прошлого ждёт тебя. Нажми, чтобы послушать.</string>
+
+    <!-- Mood & sealing -->
+    <string name="mood_pick_title">Каким был этот день?</string>
+    <string name="mood_skip">Пропустить</string>
+    <string name="seal_button">🔒 Запечатать до даты…</string>
+    <string name="seal_chip">Запечатано до %1$s</string>
+    <string name="sealed_badge">🔒 Запечатано до %1$s</string>
+    <string name="record_locked">Запись запечатана до %1$s</string>
+
+    <!-- Replies -->
+    <string name="reply_button">Ответить</string>
+    <string name="replies_title">Диалог с прошлым</string>
+    <string name="reply_hint">Твой ответ прошлому себе…</string>
+
+    <!-- Year map -->
+    <string name="year_title">Карта года</string>
+    <string name="year_empty">В этом году пока нет записей — созвездие ещё темное.</string>
+
+    <!-- Search -->
+    <string name="search_placeholder">Поиск по тексту записей…</string>
+
+    <!-- Playback -->
+    <string name="playback_locked">🔒 Запечатано до %1$s</string>
+    <string name="streak_days">%1$d дней подряд</string>
+
+    <!-- Settings: sections -->
+    <string name="section_reminders">Напоминания</string>
+    <string name="section_appearance">Внешний вид</string>
+    <string name="section_privacy">Приватность</string>
+    <string name="section_recording">Запись</string>
+    <string name="section_data">Данные</string>
+
+    <string name="weekly_random">Запись недели</string>
+    <string name="day_mon">Пн</string>
+    <string name="day_tue">Вт</string>
+    <string name="day_wed">Ср</string>
+    <string name="day_thu">Чт</string>
+    <string name="day_fri">Пт</string>
+    <string name="day_sat">Сб</string>
+    <string name="day_sun">Вс</string>
+
+    <string name="dynamic_colors">Динамические цвета (из обоев)</string>
+    <string name="font_size">Размер текста</string>
+    <string name="theme_active">Активна</string>
+    <string name="theme_cassette">Кассета</string>
+    <string name="theme_paper">Бумага</string>
+    <string name="theme_midnight">Полночь</string>
+    <string name="theme_forest">Лес</string>
+    <string name="theme_vintage">Винтаж</string>
+
+    <string name="pin_lock">PIN-блокировка</string>
+    <string name="pin_set">Задать PIN</string>
+    <string name="pin_change">Сменить PIN</string>
+    <string name="pin_disable">Отключить PIN</string>
+    <string name="pin_enter">Введите PIN</string>
+    <string name="pin_create">Придумайте PIN из 4 цифр</string>
+    <string name="pin_wrong">Неверный PIN</string>
+    <string name="biometric_unlock">Разблокировка по биометрии</string>
+    <string name="hide_previews">Скрывать текст в ленте</string>
+
+    <string name="quality_eco">Эконом (64 кбит/с)</string>
+    <string name="quality_standard">Стандарт (128 кбит/с)</string>
+    <string name="quality_high">Высокое (192 кбит/с)</string>
+    <string name="auto_stop_silence">Автостоп при тишине</string>
+
+    <string name="export_zip">Экспорт всего (zip)</string>
+    <string name="export_done">Экспортировано: %1$s</string>
+    <string name="export_empty">Пока нечего экспортировать</string>
+    <string name="cleanup_run">Удалить записи старше выбранного срока</string>
+    <string name="cleanup_done">Удалено записей: %1$d</string>
+    <string name="cleanup_nothing">Ничего не нужно чистить</string>
+    <string name="cleanup_confirm_title">Удалить старые записи?</string>
+    <string name="cleanup_confirm_text">Записи старше выбранного срока будут удалены безвозвратно.</string>
+    <string name="delete">Удалить</string>
+    <string name="cancel">Отмена</string>
+    <string name="keep_forever">Хранить всегда</string>
+    <string name="older_than_3m">Старше 3 месяцев</string>
+    <string name="older_than_6m">Старше 6 месяцев</string>
+    <string name="older_than_12m">Старше 12 месяцев</string>
+</resources>
