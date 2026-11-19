@@ -41,6 +41,7 @@ import ru.echoapp.R
 import ru.echoapp.ui.feed.FeedScreen
 import ru.echoapp.ui.letter.LetterScreen
 import ru.echoapp.ui.onboarding.OnboardingScreen
+import ru.echoapp.ui.pastweek.PastWeekScreen
 import ru.echoapp.ui.playback.PlaybackScreen
 import ru.echoapp.ui.record.RecordScreen
 import ru.echoapp.ui.settings.SettingsScreen
@@ -54,6 +55,7 @@ object Routes {
     const val LETTER = "letter"
     const val SETTINGS = "settings"
     const val YEAR = "year"
+    const val PAST_WEEK = "pastweek"
     const val PLAYBACK = "playback/{recordingId}"
     const val RECORD_REPLY = "record?root={root}&parent={parent}"
 
@@ -80,6 +82,7 @@ fun AppRoot(
     onboardingDone: Boolean,
     pendingLetterId: MutableState<Long?>,
     pendingRecordingId: MutableState<Long?>,
+    pendingPastWeek: MutableState<Boolean>,
     palette: ThemePalette,
 ) {
     val navController = rememberNavController()
@@ -103,6 +106,14 @@ fun AppRoot(
             }
         }
     }
+    LaunchedEffect(pendingPastWeek.value) {
+        if (pendingPastWeek.value) {
+            pendingPastWeek.value = false
+            navController.navigate(Routes.PAST_WEEK) {
+                launchSingleTop = true
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -112,6 +123,7 @@ fun AppRoot(
             AnimatedVisibility(
                 visible = currentRoute != Routes.ONBOARDING &&
                     currentRoute != Routes.PLAYBACK &&
+                    currentRoute != Routes.PAST_WEEK &&
                     currentRoute != "record?root={root}&parent={parent}",
                 enter = fadeIn(tween(300)) + slideIn { IntOffset(0, it.height) },
                 exit = fadeOut(tween(250)) + slideOut { IntOffset(0, it.height) },
@@ -205,6 +217,12 @@ fun AppRoot(
                     onReply = { root, parent ->
                         navController.navigate("record?root=$root&parent=${parent ?: -1L}")
                     },
+                )
+            }
+            composable(Routes.PAST_WEEK) {
+                PastWeekScreen(
+                    app = app,
+                    onOpenRecording = { id -> navController.navigate(Routes.playback(id)) },
                 )
             }
             composable(Routes.YEAR) {

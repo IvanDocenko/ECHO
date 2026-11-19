@@ -46,6 +46,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -230,6 +231,20 @@ fun RecordScreen(
                     }
                 }
                 Spacer(Modifier.height(12.dp))
+            }
+            if (vm.sealedUntil != null && rootReplyId == null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                ) {
+                    Switch(checked = vm.sealedNoDelete, onCheckedChange = { vm.setSealNoDelete(it) })
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(R.string.seal_no_delete),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             if (rootReplyId == null && !vm.isRecording) {
                 TextButton(onClick = { showDatePicker = true }) {

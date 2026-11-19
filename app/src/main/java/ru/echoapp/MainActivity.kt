@@ -26,12 +26,14 @@ import ru.echoapp.notifications.NotificationHelper
 import ru.echoapp.ui.AppRoot
 import ru.echoapp.ui.lock.LockScreen
 import ru.echoapp.ui.theme.EchoTheme
+import ru.echoapp.ui.theme.ThemeKey
 import ru.echoapp.ui.theme.ThemePalette
 
 class MainActivity : AppCompatActivity() {
 
     private val pendingLetterId = mutableStateOf<Long?>(null)
     private val pendingRecordingId = mutableStateOf<Long?>(null)
+    private val pendingPastWeek = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,10 +49,10 @@ class MainActivity : AppCompatActivity() {
                         CircularProgressIndicator()
                     }
                 } else {
-                    val palette = ThemePalette.byKey(current.themeKey)
+                    val palette = resolvePalette(current)
                     EchoTheme(
                         palette = palette,
-                        dynamicColors = current.dynamicColors,
+                        dynamicColors = current.dynamicColors && palette.key != ThemeKey.AUTO,
                         fontScale = current.fontScale,
                     ) {
                         val needsLock = current.pinEnabled && current.pinCode.length == 4
@@ -67,6 +69,7 @@ class MainActivity : AppCompatActivity() {
                                 onboardingDone = current.onboardingDone,
                                 pendingLetterId = pendingLetterId,
                                 pendingRecordingId = pendingRecordingId,
+                                pendingPastWeek = pendingPastWeek,
                                 palette = palette,
                             )
                         }
@@ -87,7 +90,21 @@ class MainActivity : AppCompatActivity() {
         if (letter != -1L) pendingLetterId.value = letter
         val recording = intent.getLongExtra(NotificationHelper.EXTRA_OPEN_RECORDING, -1L)
         if (recording != -1L) pendingRecordingId.value = recording
+        if (intent.getBooleanExtra(NotificationHelper.EXTRA_OPEN_PAST_WEEK, false)) {
+            pendingPastWeek.value = true
+        }
     }
+}
+
+/** Тема «Авто»: 22:00–06:00 — «Полночь», днём — «Бумага». */
+@Composable
+private fun resolvePalette(settings: ru.echoapp.settings.AppSettings): ThemePalette {
+    if (settings.themeKey != ThemeKey.AUTO.name) {
+        return ThemePalette.byKey(settings.themeKey, settings.customAccent, settings.customBackground)
+    }
+    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+    val night = hour >= 22 || hour < 6
+    return ThemePalette.presets.first { it.key == if (night) ThemeKey.MIDNIGHT else ThemeKey.PAPER }
 }
 
 /** На Android 13+ запрашиваем разрешение на уведомления при первом показе. */

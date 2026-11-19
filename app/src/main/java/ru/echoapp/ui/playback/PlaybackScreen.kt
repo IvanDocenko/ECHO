@@ -41,8 +41,11 @@ import androidx.compose.ui.unit.dp
 import ru.echoapp.EchoApp
 import ru.echoapp.R
 import ru.echoapp.audio.AudioPlayer
+import ru.echoapp.audio.WaveformExtractor
 import ru.echoapp.data.RecordingEntity
 import ru.echoapp.data.ReplyEntity
+import ru.echoapp.ui.common.SeekBar
+import ru.echoapp.ui.common.WaveformBar
 import ru.echoapp.util.AnniversaryDates
 import ru.echoapp.util.Mood
 
@@ -56,6 +59,7 @@ fun PlaybackScreen(
     var recording by remember { mutableStateOf<RecordingEntity?>(null) }
     var replies by remember { mutableStateOf<List<ReplyEntity>>(emptyList()) }
     var loaded by remember { mutableStateOf(false) }
+    var levels by remember { mutableStateOf<List<Int>>(emptyList()) }
 
     val player = remember { AudioPlayer() }
     val playback by player.state.collectAsState()
@@ -71,6 +75,24 @@ fun PlaybackScreen(
         loaded = true
     }
 
+    // Настоящий waveform: берём сохранённые амплитуды или декодируем файл один раз.
+    LaunchedEffect(recording?.id, recording?.waveform) {
+        val entry = recording ?: return@LaunchedEffect
+        if (entry.kind == "letter" || entry.filePath.isBlank()) return@LaunchedEffect
+        val stored = entry.waveform
+        levels = if (stored != null) {
+            WaveformExtractor.parse(stored)
+        } else {
+            val extracted = WaveformExtractor.extract(entry.filePath)
+            if (extracted != null) {
+                app.repository.updateWaveform(entry.id, extracted)
+                WaveformExtractor.parse(extracted)
+            } else {
+                emptyList()
+            }
+        }
+    }
+
     val entry = recording
     if (!loaded || entry == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -83,6 +105,7 @@ fun PlaybackScreen(
     }
 
     val isSealed = entry.sealedUntil != null && entry.sealedUntil > System.currentTimeMillis()
+    val isLetter = entry.kind == "letter"
 
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -115,7 +138,7 @@ fun PlaybackScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        } else {
+        } else if (!isLetter) {
             PlayRow(
                 itemId = entry.id,
                 durationLabel = AnniversaryDates.formatElapsed(entry.durationMs),
@@ -128,9 +151,31 @@ fun PlaybackScreen(
                     }
                 },
             )
+            if (playback.recordingId == entry.id) {
+                Spacer(Modifier.height(4.dp))
+                SeekBar(
+                    positionMs = playback.positionMs,
+                    durationMs = playback.durationMs,
+                    onSeek = { player.seekTo(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (levels.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                val progress = if (playback.recordingId == entry.id && playback.durationMs > 0) {
+                    playback.positionMs.toFloat() / playback.durationMs
+                } else {
+                    null
+                }
+                WaveformBar(
+                    levels = levels,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    progress = progress,
+                )
+            }
         }
 
-        if (!entry.transcript.isNullOrBlank() && !isSealed) {
+        if (!entry.transcript.isNullOrBlank() && (!isSealed || isLetter)) {
             Spacer(Modifier.height(16.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -200,20 +245,22 @@ fun PlaybackScreen(
         }
 
         Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = {
-                val lastReplyId = replies.lastOrNull()?.id
-                onReply(entry.id, lastReplyId)
-            },
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ),
-        ) {
-            Icon(Icons.Filled.Reply, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.reply_button))
+        if (!isLetter) {
+            Button(
+                onClick = {
+                    val lastReplyId = replies.lastOrNull()?.id
+                    onReply(entry.id, lastReplyId)
+                },
+                shape = CircleShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                Icon(Icons.Filled.Reply, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.reply_button))
+            }
         }
         Spacer(Modifier.height(24.dp))
     }

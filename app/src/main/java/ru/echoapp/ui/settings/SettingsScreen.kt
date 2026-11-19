@@ -1,8 +1,13 @@
 package ru.echoapp.ui.settings
 
+import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.FileProvider
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +49,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -57,6 +63,7 @@ import ru.echoapp.BuildConfig
 import ru.echoapp.EchoApp
 import ru.echoapp.R
 import ru.echoapp.data.ExportHelper
+import ru.echoapp.data.ImportHelper
 import ru.echoapp.settings.AppSettings
 import ru.echoapp.settings.AudioQuality
 import ru.echoapp.ui.lock.PinPad
@@ -85,6 +92,7 @@ fun SettingsScreen(app: EchoApp) {
 
         RemindersSection(app, current)
         AppearanceSection(app, current)
+        LetterAiSection(app, current)
         PrivacySection(app, current)
         RecordingSection(app, current)
         DataSection(app, current)
@@ -212,6 +220,23 @@ private fun RemindersSection(app: EchoApp, current: AppSettings) {
                 )
             }
         }
+        // «Неделя из прошлого» — независимо от ежедневного напоминания.
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.past_week_setting), style = MaterialTheme.typography.titleMedium)
+            Switch(
+                checked = current.pastWeekEnabled,
+                onCheckedChange = { enabled ->
+                    scope.launch {
+                        app.settingsStore.setPastWeekEnabled(enabled)
+                        WorkScheduler.schedulePastWeek(app, enabled)
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -241,7 +266,32 @@ private fun AppearanceSection(app: EchoApp, current: AppSettings) {
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
+            // Авто по времени суток.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { scope.launch { app.settingsStore.setTheme(ThemeKey.AUTO.name, dynamicColors = false) } }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = current.themeKey == ThemeKey.AUTO.name && !current.dynamicColors,
+                    onClick = null,
+                )
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text(stringResource(R.string.theme_auto), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = stringResource(R.string.theme_auto_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
+
+        // Кастомная тема: акцент и фон.
+        CustomThemeEditor(app, current)
 
         Spacer(Modifier.height(12.dp))
         Row(
@@ -365,12 +415,156 @@ private fun ThemePreviewCard(
     }
 }
 
+/** Редактор кастомной темы: выбор акцента и фона из палитры свотчей. */
+@Composable
+private fun CustomThemeEditor(app: EchoApp, current: AppSettings) {
+    val scope = rememberCoroutineScope()
+    val isCustom = current.themeKey == ThemeKey.CUSTOM.name && !current.dynamicColors
+    val accentSwatches = listOf(
+        0xFFFFB74D, 0xFF8F7BFF, 0xFF2E6FB7, 0xFF81C784,
+        0xFFFF5C8A, 0xFFE57373, 0xFF4DD0E1, 0xFFA3B18A,
+    )
+    val backgroundSwatches = listOf(
+        0xFF121212, 0xFF050508, 0xFF0D1B2A, 0xFF1B2F1B,
+        0xFFF7F3E9, 0xFFFFFFFF, 0xFFF2F7FC, 0xFFF0E6D2,
+    )
+
+    Column(Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RadioButton(selected = isCustom, onClick = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.theme_custom), style = MaterialTheme.typography.bodyMedium)
+            if (isCustom) {
+                Spacer(Modifier.width(8.dp))
+                Box(
+                    Modifier
+                        .size(16.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape)
+                        .padding(1.dp)
+                        .background(Color(current.customAccent), CircleShape),
+                )
+                Spacer(Modifier.width(4.dp))
+                Box(
+                    Modifier
+                        .size(16.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), CircleShape)
+                        .padding(1.dp)
+                        .background(Color(current.customBackground), CircleShape),
+                )
+            }
+        }
+        if (isCustom) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.theme_custom_accent),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SwatchRow(
+                colors = accentSwatches,
+                selected = current.customAccent,
+                onSelect = { scope.launch { app.settingsStore.setCustomTheme(it, current.customBackground) } },
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.theme_custom_background),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SwatchRow(
+                colors = backgroundSwatches,
+                selected = current.customBackground,
+                onSelect = { scope.launch { app.settingsStore.setCustomTheme(current.customAccent, it) } },
+            )
+        } else {
+            TextButton(onClick = {
+                scope.launch { app.settingsStore.setTheme(ThemeKey.CUSTOM.name, dynamicColors = false) }
+            }) {
+                Text(stringResource(R.string.theme_custom_edit))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SwatchRow(colors: List<Long>, selected: Long, onSelect: (Long) -> Unit) {
+    val borderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        colors.forEach { argb ->
+            Box(
+                Modifier
+                    .size(28.dp)
+                    .border(1.dp, borderColor, CircleShape)
+                    .padding(2.dp)
+                    .background(Color(argb), CircleShape)
+                    .clickable { onSelect(argb) },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (argb == selected) {
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = stringResource(R.string.theme_active),
+                        tint = if (isDarkColor(argb)) Color.White else Color.Black,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun isDarkColor(argb: Long): Boolean {
+    val c = Color(argb)
+    return 0.2126f * c.red + 0.7152f * c.green + 0.0722f * c.blue < 0.35f
+}
+
 private fun paletteNameRes(key: ThemeKey): Int = when (key) {
     ThemeKey.CASSETTE -> R.string.theme_cassette
     ThemeKey.PAPER -> R.string.theme_paper
     ThemeKey.MIDNIGHT -> R.string.theme_midnight
     ThemeKey.FOREST -> R.string.theme_forest
     ThemeKey.VINTAGE -> R.string.theme_vintage
+    ThemeKey.NEON -> R.string.theme_neon
+    ThemeKey.FROST -> R.string.theme_frost
+    ThemeKey.AUTO -> R.string.theme_auto
+    ThemeKey.CUSTOM -> R.string.theme_custom
+}
+
+// ─── AI-письмо за год ──────────────────────────────────────────
+
+@Composable
+private fun LetterAiSection(app: EchoApp, current: AppSettings) {
+    val scope = rememberCoroutineScope()
+    SectionCard(stringResource(R.string.section_letter_ai)) {
+        Text(
+            text = stringResource(R.string.letter_ai_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        Column(Modifier.selectableGroup()) {
+            listOf(
+                "OFF" to R.string.letter_ai_off,
+                "LOCAL" to R.string.letter_ai_local,
+            ).forEach { (mode, labelRes) ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = current.letterAi == mode,
+                            onClick = { scope.launch { app.settingsStore.setLetterAi(mode) } },
+                            role = Role.RadioButton,
+                        )
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(selected = current.letterAi == mode, onClick = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(labelRes))
+                }
+            }
+        }
+    }
 }
 
 // ─── Приватность ───────────────────────────────────────────────
@@ -550,36 +744,57 @@ private fun DataSection(app: EchoApp, current: AppSettings) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var showCleanupConfirm by remember { mutableStateOf(false) }
-    val scopeIO = rememberCoroutineScope()
+    var importSummary by remember { mutableStateOf<ImportHelper.Result?>(null) }
+    var importFailed by remember { mutableStateOf(false) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val result = ImportHelper.import(context, uri, app.repository)
+                if (result == null) importFailed = true else importSummary = result
+            }
+        }
+    }
+
+    fun exportAndShare() {
+        scope.launch {
+            val recordings = app.repository.allRecordingsOnce()
+            if (recordings.isEmpty()) {
+                Toast.makeText(context, R.string.export_empty, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val file = ExportHelper.export(context, recordings, app.repository.allRepliesOnce())
+            if (file == null) {
+                Toast.makeText(context, R.string.record_error_save, Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val uri = FileProvider.getUriForFile(
+                context, "${context.packageName}.fileprovider", file,
+            )
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/zip"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            runCatching { context.startActivity(Intent.createChooser(intent, null)) }
+        }
+    }
 
     SectionCard(stringResource(R.string.section_data)) {
         OutlinedButton(
-            onClick = {
-                scopeIO.launch {
-                    val recordings = app.repository.allRecordingsOnce()
-                    if (recordings.isEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, R.string.export_empty, Toast.LENGTH_SHORT).show()
-                        }
-                        return@launch
-                    }
-                    val replies = app.repository.allRepliesOnce()
-                    val file = ExportHelper.export(context, recordings, replies)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            context.getString(
-                                if (file != null) R.string.export_done else R.string.record_error_save,
-                                file?.absolutePath ?: "",
-                            ),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }
-            },
+            onClick = { exportAndShare() },
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(R.string.export_zip))
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedButton(
+            onClick = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.import_zip))
         }
 
         Spacer(Modifier.height(12.dp))
@@ -630,20 +845,18 @@ private fun DataSection(app: EchoApp, current: AppSettings) {
                     showCleanupConfirm = false
                     val months = current.retentionMonths
                     if (months > 0) {
-                        scopeIO.launch {
+                        scope.launch {
                             val calendar = Calendar.getInstance()
                             calendar.add(Calendar.MONTH, -months)
                             val deleted = app.repository.cleanupOlderThan(calendar.timeInMillis)
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(
-                                        if (deleted > 0) R.string.cleanup_done else R.string.cleanup_nothing,
-                                        deleted,
-                                    ),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
+                            Toast.makeText(
+                                context,
+                                context.getString(
+                                    if (deleted > 0) R.string.cleanup_done else R.string.cleanup_nothing,
+                                    deleted,
+                                ),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         }
                     }
                 }) { Text(stringResource(R.string.delete)) }
@@ -652,6 +865,37 @@ private fun DataSection(app: EchoApp, current: AppSettings) {
                 TextButton(onClick = { showCleanupConfirm = false }) {
                     Text(stringResource(R.string.cancel))
                 }
+            },
+        )
+    }
+
+    if (importSummary != null) {
+        val summary = importSummary!!
+        AlertDialog(
+            onDismissRequest = { importSummary = null },
+            title = { Text(stringResource(R.string.import_done_title), fontFamily = FontFamily.Serif) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.import_done_text,
+                        summary.imported,
+                        summary.skippedDuplicates,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { importSummary = null }) { Text(stringResource(R.string.ok)) }
+            },
+        )
+    }
+
+    if (importFailed) {
+        AlertDialog(
+            onDismissRequest = { importFailed = false },
+            title = { Text(stringResource(R.string.import_failed_title), fontFamily = FontFamily.Serif) },
+            text = { Text(stringResource(R.string.import_failed_text)) },
+            confirmButton = {
+                TextButton(onClick = { importFailed = false }) { Text(stringResource(R.string.ok)) }
             },
         )
     }

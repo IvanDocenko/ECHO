@@ -20,6 +20,8 @@ object WorkScheduler {
     private const val WORK_ANNIVERSARY_PREFIX = "anniversary_"
     private const val WORK_DAILY_REMINDER = "daily_reminder"
     private const val WORK_WEEKLY_RANDOM = "weekly_random"
+    private const val WORK_PAST_WEEK = "past_week"
+    private const val WORK_SMART_REMINDER = "smart_reminder"
 
     /** Планирует показ записи ровно через год после её создания. */
     fun scheduleAnniversary(context: Context, recordingId: Long, anniversaryAt: Long) {
@@ -80,8 +82,77 @@ object WorkScheduler {
         )
     }
 
-    private fun delayUntilTime(hour: Int, minute: Int): Long {
+    /** «Неделя из прошлого» — воскресенье 12:00, отдельно от «записи недели». */
+    fun schedulePastWeek(context: Context, enabled: Boolean) {
+        val workManager = WorkManager.getInstance(context)
+        workManager.cancelUniqueWork(WORK_PAST_WEEK)
+        if (!enabled) return
+
+        val request = PeriodicWorkRequestBuilder<PastWeekWorker>(7, TimeUnit.DAYS)
+            .setInitialDelay(delayUntilNext(weekday = Calendar.SUNDAY, hour = 12), TimeUnit.MILLISECONDS)
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            WORK_PAST_WEEK,
+            ExistingPeriodicWorkPolicy.UPDATE,
+            request,
+        )
+    }
+
+    /** Умные напоминания: 20:00 — нет записи к вечеру; 23:00 — серия на грани. */
+    fun scheduleSmartReminders(context: Context) {
+        val workManager = WorkManager.getInstance(context)
+        workManager.cancelUniqueWork(WORK_SMART_REMINDER)
+
         val now = System.currentTimeMillis()
+        val evening = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 20)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= now) add(Calendar.DAY_OF_YEAR, 1)
+        }.timeInMillis
+        val streakHour = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= now) add(Calendar.DAY_OF_YEAR, 1)
+        }.timeInMillis
+
+        workManager.enqueueUniquePeriodicWork(
+            WORK_SMART_REMINDER + "_evening",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<SmartReminderWorker>(24, TimeUnit.HOURS)
+                .setInitialDelay(evening - now, TimeUnit.MILLISECONDS)
+                .setInputData(Data.Builder().putBoolean(SmartReminderWorker.KEY_STREAK_MODE, false).build())
+                .build(),
+        )
+        workManager.enqueueUniquePeriodicWork(
+            WORK_SMART_REMINDER + "_streak",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            PeriodicWorkRequestBuilder<SmartReminderWorker>(24, TimeUnit.HOURS)
+                .setInitialDelay(streakHour - now, TimeUnit.MILLISECONDS)
+                .setInputData(Data.Builder().putBoolean(SmartReminderWorker.KEY_STREAK_MODE, true).build())
+                .build(),
+        )
+    }
+
+    /** До ближайшего [weekday] [hour]:00. */
+    private fun delayUntilNext(weekday: Int, hour: Int): Long {
+        val now = System.currentTimeMillis()
+        val target = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            while (get(Calendar.DAY_OF_WEEK) != weekday || timeInMillis <= now) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }.timeInMillis
+        return target - now
+    }
+
+    private fun delayUntilTime(hour: Int, minute: Int): Long {        val now = System.currentTimeMillis()
         val target = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, hour)
             set(Calendar.MINUTE, minute)

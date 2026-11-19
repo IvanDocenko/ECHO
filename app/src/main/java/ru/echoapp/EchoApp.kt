@@ -48,6 +48,8 @@ class EchoApp : Application() {
                 settings.reminderEnabled,
             )
             WorkScheduler.scheduleWeeklyRandom(this@EchoApp, settings.weeklyRandomEnabled)
+            WorkScheduler.schedulePastWeek(this@EchoApp, settings.pastWeekEnabled)
+            WorkScheduler.scheduleSmartReminders(this@EchoApp)
         }
     }
 }

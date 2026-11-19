@@ -158,4 +158,53 @@
     <string name="older_than_3m">Старше 3 месяцев</string>
     <string name="older_than_6m">Старше 6 месяцев</string>
     <string name="older_than_12m">Старше 12 месяцев</string>
+
+    <!-- Импорт / экспорт -->
+    <string name="import_zip">Импорт из ZIP</string>
+    <string name="import_done_title">Импорт завершён</string>
+    <string name="import_done_text">Импортировано записей: %1$d, пропущено дубликатов: %2$d</string>
+    <string name="import_failed_title">Импорт не удался</string>
+    <string name="import_failed_text">Не получилось прочитать архив. Убедись, что это ZIP-экспорт ECHO.</string>
+    <string name="ok">ОК</string>
+    <string name="delete_blocked_sealed">Запись запечатана — удаление заблокировано до её открытия</string>
+
+    <!-- Письмо за год (AI на устройстве) -->
+    <string name="section_letter_ai">AI-письмо за год</string>
+    <string name="letter_ai_hint">Составить письмо по записям года. Всё генерируется на устройстве, данные никуда не уходят.</string>
+    <string name="letter_ai_off">Выключено</string>
+    <string name="letter_ai_local">На устройстве (офлайн)</string>
+    <string name="letter_year_button">Письмо за год</string>
+    <string name="letter_year_title">Твой год — письмом</string>
+    <string name="letter_year_generating">Пишу…</string>
+    <string name="feed_letter_badge">Письмо за год</string>
+
+    <!-- Неделя из прошлого -->
+    <string name="past_week_setting">Неделя из прошлого</string>
+    <string name="past_week_title">Неделя из прошлого</string>
+    <string name="past_week_empty">Год назад на этой неделе записей не было.</string>
+    <string name="notif_past_week_title">Неделя из прошлого</string>
+    <string name="notif_past_week_text">На этой неделе год назад ты что-то записал(а). Послушай.</string>
+
+    <!-- Умные напоминания -->
+    <string name="channel_smart">Умные напоминания</string>
+    <string name="channel_smart_desc">Предупреждения о серии и вечерние подсказки</string>
+    <string name="notif_streak_title">Не сгори сегодня!</string>
+    <string name="notif_streak_text">%1$d дней подряд — одна короткая запись сохранит серию.</string>
+    <string name="notif_evening_text">Сегодня записи ещё нет. 30 секунд для себя из будущего?</string>
+
+    <!-- Темы -->
+    <string name="theme_auto">Авто (день / ночь)</string>
+    <string name="theme_auto_hint">«Полночь» ночью, «Бумага» днём</string>
+    <string name="theme_neon">Неон</string>
+    <string name="theme_frost">Мороз</string>
+    <string name="theme_custom">Своя</string>
+    <string name="theme_custom_accent">Акцент</string>
+    <string name="theme_custom_background">Фон</string>
+    <string name="theme_custom_edit">Своя тема…</string>
+
+    <!-- Запечатать навсегда -->
+    <string name="seal_no_delete">Запретить удаление до даты</string>
+
+    <!-- Виджет -->
+    <string name="widget_record">Записать</string>
 </resources>

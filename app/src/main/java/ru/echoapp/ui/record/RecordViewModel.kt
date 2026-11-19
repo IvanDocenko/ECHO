@@ -48,7 +48,16 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
 
     private var pendingFile by mutableStateOf<File?>(null)
     private var pendingDuration by mutableLongStateOf(0L)
+    private var pendingWaveform: String? = null
     private var watchJob: Job? = null
+    private val amplitudeLevels = mutableListOf<Int>()
+
+    /** «Запечатать навсегда»: запрет удаления, пока запись запечатана. */
+    var sealedNoDelete by mutableStateOf(false); private set
+
+    fun setSealNoDelete(value: Boolean) {
+        sealedNoDelete = value
+    }
 
     fun maxAmplitude(): Int = recorder.maxAmplitude()
 
@@ -63,6 +72,7 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setSeal(until: Long?) {
         sealedUntil = until
+        if (until == null) sealedNoDelete = false
     }
 
     fun save(mood: Int, rootReplyId: Long?, parentReplyId: Long?, onSaved: () -> Unit) {
@@ -79,7 +89,13 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
                 if (rootReplyId != null) {
                     null to echoApp.repository.saveReply(rootReplyId, parentReplyId, file, duration, mood).id
                 } else {
-                    echoApp.repository.saveRecording(file, duration, mood, sealedUntil).id to null
+                    echoApp.repository
+                        .saveRecording(
+                            file, duration, mood, sealedUntil,
+                            sealedNoDelete = sealedNoDelete && sealedUntil != null,
+                            waveform = pendingWaveform,
+                        )
+                        .id to null
                 }
             }
             saving = false
@@ -98,6 +114,7 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
             pendingFile = null
+            pendingWaveform = null
             SoundEffects.click()
             onSaved()
         }
@@ -110,6 +127,7 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
             transcriber.start(locale)
         }
             .onSuccess {
+                amplitudeLevels.clear()
                 isRecording = true
                 startWatching(autoStopSilence)
             }
@@ -119,6 +137,10 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
     private fun stopForMood() {
         if (!isRecording) return
         isRecording = false
+        pendingWaveform = amplitudeLevels.joinToString(",") {
+            (it * 100 / 32767).coerceIn(0, 100).toString()
+        }
+        amplitudeLevels.clear()
         val result = recorder.stop()
         val file = result?.first
         val duration = result?.second ?: 0L
@@ -136,9 +158,11 @@ class RecordViewModel(app: Application) : AndroidViewModel(app) {
     private fun startWatching(autoStopSilence: Boolean) {
         watchJob?.cancel()
         watchJob = viewModelScope.launch {
-            // Таймер записи.
+            // Таймер записи + сбор реальных амплитуд для waveform.
             launch {
                 while (isRecording) {
+                    val amplitude = recorder.maxAmplitude()
+                    amplitudeLevels.add(amplitude)
                     elapsedMs = recorder.elapsedMs()
                     delay(100)
                 }

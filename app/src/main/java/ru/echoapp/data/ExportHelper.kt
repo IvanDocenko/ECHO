@@ -1,7 +1,6 @@
 package ru.echoapp.data
 
 import android.content.Context
-import android.os.Environment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -15,8 +14,8 @@ object ExportHelper {
     suspend fun export(context: Context, recordings: List<RecordingEntity>, replies: List<ReplyEntity>): File? =
         withContext(Dispatchers.IO) {
             runCatching {
-                val dir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-                    ?: context.filesDir
+                // Кэш, а не Downloads: файл сразу отдаётся через share-sheet (FileProvider).
+                val dir = File(context.cacheDir, "exports").apply { mkdirs() }
                 val zipFile = File(dir, "echo_export_${System.currentTimeMillis()}.zip")
 
                 ZipOutputStream(FileOutputStream(zipFile)).use { zip ->
@@ -54,7 +53,9 @@ object ExportHelper {
             "{\"id\":${rec.id},\"file\":\"${File(rec.filePath).name}\"," +
                 "\"createdAt\":${rec.createdAt},\"durationMs\":${rec.durationMs}," +
                 "\"mood\":${rec.mood},\"transcript\":\"${esc(rec.transcript)}\"," +
-                "\"sealedUntil\":${rec.sealedUntil ?: "null"}}"
+                "\"sealedUntil\":${rec.sealedUntil ?: "null"}" +
+                (if (rec.sealedNoDelete) ",\"sealedNoDelete\":true" else "") +
+                "}"
         })
         sb.append("],\"replies\":[")
         sb.append(replies.joinToString(",") { reply ->

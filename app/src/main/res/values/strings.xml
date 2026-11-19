@@ -158,4 +158,53 @@
     <string name="older_than_3m">Older than 3 months</string>
     <string name="older_than_6m">Older than 6 months</string>
     <string name="older_than_12m">Older than 12 months</string>
+
+    <!-- Import / export -->
+    <string name="import_zip">Import from ZIP</string>
+    <string name="import_done_title">Import complete</string>
+    <string name="import_done_text">Imported %1$d entries, skipped %2$d duplicates</string>
+    <string name="import_failed_title">Import failed</string>
+    <string name="import_failed_text">Couldn\'t read this archive. Make sure it is an ECHO export ZIP.</string>
+    <string name="ok">OK</string>
+    <string name="delete_blocked_sealed">This entry is sealed — deletion is locked until it opens</string>
+
+    <!-- Year letter (AI, on-device) -->
+    <string name="section_letter_ai">AI year letter</string>
+    <string name="letter_ai_hint">Compose a letter from your year of recordings. Everything is generated on the device, no data leaves the phone.</string>
+    <string name="letter_ai_off">Off</string>
+    <string name="letter_ai_local">On-device (offline)</string>
+    <string name="letter_year_button">Letter for the year</string>
+    <string name="letter_year_title">Your year, in a letter</string>
+    <string name="letter_year_generating">Writing…</string>
+    <string name="feed_letter_badge">Year letter</string>
+
+    <!-- Past week -->
+    <string name="past_week_setting">Week from the past</string>
+    <string name="past_week_title">A week from the past</string>
+    <string name="past_week_empty">A year ago, this week, there were no recordings.</string>
+    <string name="notif_past_week_title">A week from the past</string>
+    <string name="notif_past_week_text">You recorded something this week a year ago. Listen.</string>
+
+    <!-- Smart reminders -->
+    <string name="channel_smart">Smart reminders</string>
+    <string name="channel_smart_desc">Streak warnings and evening nudges</string>
+    <string name="notif_streak_title">Don\'t lose the streak today!</string>
+    <string name="notif_streak_text">%1$d days in a row — one short recording keeps it alive.</string>
+    <string name="notif_evening_text">No recording yet today. 30 seconds for your future self?</string>
+
+    <!-- Themes -->
+    <string name="theme_auto">Auto (day / night)</string>
+    <string name="theme_auto_hint">Midnight at night, Paper by day</string>
+    <string name="theme_neon">Neon</string>
+    <string name="theme_frost">Frost</string>
+    <string name="theme_custom">Custom</string>
+    <string name="theme_custom_accent">Accent</string>
+    <string name="theme_custom_background">Background</string>
+    <string name="theme_custom_edit">Custom theme…</string>
+
+    <!-- Sealed forever -->
+    <string name="seal_no_delete">Prevent deletion until the date</string>
+
+    <!-- Widget -->
+    <string name="widget_record">Record</string>
 </resources>

@@ -36,6 +36,37 @@ object AnniversaryDates {
     /** Границы сутогодовой давности: тот же день и месяц, год назад от [now]. */
     fun sameDayLastYearBounds(now: Long): Pair<Long, Long> = dayBounds(plusYears(now, -1))
 
+    /** Границы календарного года, содержащего [millis] (1 янв. 00:00 — 1 янв. след. года). */
+    fun yearBounds(millis: Long): Pair<Long, Long> {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = millis
+        calendar.set(Calendar.MONTH, Calendar.JANUARY)
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val start = calendar.timeInMillis
+        calendar.add(Calendar.YEAR, 1)
+        return start to calendar.timeInMillis
+    }
+
+    /** Границы недели (пн 00:00 — след. пн 00:00) для того же периода год назад от [now]. */
+    fun sameWeekLastYearBounds(now: Long): Pair<Long, Long> {
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = now
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        // Откатываемся к понедельнику: Calendar.MONDAY = 2.
+        val shift = (calendar.get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY + 7) % 7
+        calendar.add(Calendar.DAY_OF_YEAR, -shift)
+        val start = plusYears(calendar.timeInMillis, -1)
+        val end = plusYears(calendar.apply { add(Calendar.DAY_OF_YEAR, 7) }.timeInMillis, -1)
+        return start to end
+    }
+
     /** "12 ноября 2026" / "12 November 2026" — для карточек и писем. */
     fun formatFullDate(millis: Long, locale: Locale = Locale.getDefault()): String {
         val pattern = java.text.SimpleDateFormat("d MMMM yyyy", locale)

@@ -18,6 +18,8 @@ class RecordingRepository(
         durationMs: Long,
         mood: Int = -1,
         sealedUntil: Long? = null,
+        sealedNoDelete: Boolean = false,
+        waveform: String? = null,
     ): RecordingEntity {
         val createdAt = System.currentTimeMillis()
         val entity = RecordingEntity(
@@ -27,10 +29,63 @@ class RecordingRepository(
             anniversaryAt = AnniversaryDates.plusYears(createdAt, 1),
             mood = mood,
             sealedUntil = sealedUntil,
+            sealedNoDelete = sealedNoDelete && sealedUntil != null,
+            waveform = waveform,
         )
         val id = dao.insert(entity)
         WorkScheduler.scheduleAnniversary(appContext, id, entity.anniversaryAt)
+        ru.echoapp.widget.RecordWidgetProvider.updateAll(appContext)
         return entity.copy(id = id)
+    }
+
+    /** Сохраняет текстовое письмо за год; старое письмо этого года заменяется. */
+    suspend fun saveYearLetter(text: String, now: Long = System.currentTimeMillis()): RecordingEntity {
+        val (start, end) = AnniversaryDates.yearBounds(now)
+        dao.deleteYearLetters(start, end)
+        val createdAt = System.currentTimeMillis()
+        val entity = RecordingEntity(
+            filePath = "",
+            createdAt = createdAt,
+            durationMs = 0,
+            anniversaryAt = AnniversaryDates.plusYears(createdAt, 1),
+            kind = "letter",
+            transcript = text,
+        )
+        val id = dao.insert(entity)
+        return entity.copy(id = id)
+    }
+
+    suspend fun yearLetter(now: Long = System.currentTimeMillis()): RecordingEntity? {
+        val (start, end) = AnniversaryDates.yearBounds(now)
+        return dao.yearLetter(start, end)
+    }
+
+    suspend fun updateWaveform(recordingId: Long, waveform: String) =
+        dao.updateWaveform(recordingId, waveform)
+
+    /**
+     * Импорт записей: insert-ignore по id. Возвращает пару (импортировано, пропущено дубликатов).
+     * Файлы импортируются во внутреннее хранилище до вызова (см. ImportHelper).
+     */
+    suspend fun importRecordings(entities: List<RecordingEntity>): Pair<Int, Int> {
+        var inserted = 0
+        var skipped = 0
+        entities.forEach { entity ->
+            if (dao.insertIgnore(entity) == -1L) skipped++ else {
+                inserted++
+                WorkScheduler.scheduleAnniversary(appContext, entity.id, entity.anniversaryAt)
+            }
+        }
+        return inserted to skipped
+    }
+
+    suspend fun importReplies(replies: List<ReplyEntity>): Pair<Int, Int> {
+        var inserted = 0
+        var skipped = 0
+        replies.forEach { reply ->
+            if (dao.insertReplyIgnore(reply) == -1L) skipped++ else inserted++
+        }
+        return inserted to skipped
     }
 
     suspend fun saveReply(
@@ -73,15 +128,19 @@ class RecordingRepository(
     suspend fun updateReplyTranscript(replyId: Long, text: String) =
         dao.updateReplyTranscript(replyId, text)
 
-    suspend fun deleteRecording(recording: RecordingEntity) {
+    /** true, если запись удалена; false — если она запечатана «навсегда» и удаление запрещено. */
+    suspend fun deleteRecording(recording: RecordingEntity, now: Long = System.currentTimeMillis()): Boolean {
+        if (recording.sealedNoDelete && (recording.sealedUntil ?: 0L) > now) return false
         dao.deleteById(recording.id)
         runCatching { File(recording.filePath).delete() }
         WorkScheduler.cancelAnniversary(appContext, recording.id)
+        ru.echoapp.widget.RecordWidgetProvider.updateAll(appContext)
         // Удаляем и цепочку ответов.
         repliesFor(recording.id).forEach { reply ->
             dao.deleteReplyById(reply.id)
             runCatching { File(reply.filePath).delete() }
         }
+        return true
     }
 
     suspend fun deleteReply(reply: ReplyEntity) {

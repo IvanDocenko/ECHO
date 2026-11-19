@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -36,6 +37,13 @@ data class AppSettings(
     // Запись
     val audioQuality: AudioQuality = AudioQuality.STANDARD,
     val autoStopSilence: Boolean = false,
+    // AI-письмо за год: "OFF" | "LOCAL" (API — зарезервировано)
+    val letterAi: String = "OFF",
+    // Кастомная тема (ARGB)
+    val customAccent: Long = 0xFFFFB74D,
+    val customBackground: Long = 0xFF121212,
+    // «Неделя из прошлого» — отдельное еженедельное уведомление
+    val pastWeekEnabled: Boolean = true,
     // Данные
     val retentionMonths: Int = 0,
 )
@@ -59,6 +67,10 @@ class SettingsStore(private val context: Context) {
         val AUDIO_QUALITY = stringPreferencesKey("audio_quality")
         val AUTO_STOP_SILENCE = booleanPreferencesKey("auto_stop_silence")
         val RETENTION_MONTHS = intPreferencesKey("retention_months")
+        val LETTER_AI = stringPreferencesKey("letter_ai")
+        val THEME_CUSTOM_ACCENT = longPreferencesKey("theme_custom_accent")
+        val THEME_CUSTOM_BACKGROUND = longPreferencesKey("theme_custom_background")
+        val PAST_WEEK_ENABLED = booleanPreferencesKey("past_week_enabled")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
@@ -82,6 +94,10 @@ class SettingsStore(private val context: Context) {
                 ?: AudioQuality.STANDARD,
             autoStopSilence = prefs[Keys.AUTO_STOP_SILENCE] ?: false,
             retentionMonths = prefs[Keys.RETENTION_MONTHS] ?: 0,
+            letterAi = prefs[Keys.LETTER_AI] ?: "OFF",
+            customAccent = prefs[Keys.THEME_CUSTOM_ACCENT] ?: 0xFFFFB74D,
+            customBackground = prefs[Keys.THEME_CUSTOM_BACKGROUND] ?: 0xFF121212,
+            pastWeekEnabled = prefs[Keys.PAST_WEEK_ENABLED] ?: true,
         )
     }
 
@@ -138,5 +154,20 @@ class SettingsStore(private val context: Context) {
 
     suspend fun setRetentionMonths(months: Int) {
         context.dataStore.edit { it[Keys.RETENTION_MONTHS] = months }
+    }
+
+    suspend fun setLetterAi(mode: String) {
+        context.dataStore.edit { it[Keys.LETTER_AI] = mode }
+    }
+
+    suspend fun setCustomTheme(accent: Long, background: Long) {
+        context.dataStore.edit {
+            it[Keys.THEME_CUSTOM_ACCENT] = accent
+            it[Keys.THEME_CUSTOM_BACKGROUND] = background
+        }
+    }
+
+    suspend fun setPastWeekEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.PAST_WEEK_ENABLED] = enabled }
     }
 }

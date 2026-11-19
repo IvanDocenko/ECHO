@@ -44,6 +44,20 @@ No accounts, no cloud, no tracking. Everything lives on your phone.
 - **Missed anniversaries** — if the app wasn't around on the exact date, queued
   letters are delivered as soon as it opens again.
 - **Audio quality settings** — Eco (64 kbps), Standard (128 kbps), High (192 kbps).
+- **Backup your way** — export everything to a ZIP and share it through any app
+  (Drive, Telegram, a local folder); restore it back with the built-in importer.
+- **AI year letter** — a letter composed fully on-device from a year of your
+  recordings: your numbers, moods, streaks and your own words, returned to you.
+- **Week from the past** — a weekly notification and a screen collecting this
+  week's entries exactly one year ago.
+- **Home screen widget** — your streak and a one-tap record button.
+- **Real waveforms** — actual audio amplitudes, saved with every recording and
+  shown in feed cards and the player.
+- **Themes** — Auto (Midnight at night, Paper by day), Neon, Frost, and a fully
+  custom accent/background theme.
+- **Smart reminders** — a gentle evening nudge when there's no recording yet,
+  and an urgent "don't lose the streak!" alert when a long streak is at risk.
+- **Seal forever** — lock a recording so it can't be deleted before it opens.
 - **Themes & languages** — dark / light / system theme, English and Russian.
 
 ## Tech stack
@@ -134,9 +148,22 @@ app/src/main/java/ru/echoapp/
 ## Roadmap
 
 - [ ] Foreground service recording with a persistent notification
-- [ ] Waveform scrubbing on the playback screen
-- [ ] Export / backup of the archive
-- [ ] Home-screen widget with the streak
+- [ ] Seek by tapping the waveform itself
+- [ ] Quick-record shortcut in the widget
+
+## Changelog
+
+### 1.2
+- ZIP export through the share sheet + full ZIP import (duplicates skipped)
+- AI year letter (on-device), week-from-the-past screen and notification
+- Home screen widget, real audio waveforms, smart reminders
+- Seek bar with position/duration in the player and the letter screen
+- New themes: Auto, Neon, Frost, custom accent/background
+- Color swatches get a visible outline in light themes
+- "Seal forever" deletion lock; Room DB migration 2 → 3 (data preserved)
+
+### 1.1
+- Recording survives navigation and rotation (state moved to a ViewModel)
 
 ## Third-party licenses
 

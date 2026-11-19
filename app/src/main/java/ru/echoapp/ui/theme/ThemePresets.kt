@@ -2,7 +2,7 @@ package ru.echoapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-enum class ThemeKey { CASSETTE, PAPER, MIDNIGHT, FOREST, VINTAGE }
+enum class ThemeKey { CASSETTE, PAPER, MIDNIGHT, FOREST, VINTAGE, NEON, FROST, AUTO, CUSTOM }
 
 /** Полная палитра пресета: цвета интерфейса + палитра точек настроения для карты года. */
 data class ThemePalette(
@@ -98,9 +98,97 @@ data class ThemePalette(
                 ),
                 serifEverywhere = true,
             ),
+            ThemePalette(
+                key = ThemeKey.NEON,
+                isDark = true,
+                primary = Color(0xFF8F7BFF),
+                background = Color(0xFF050508),
+                surface = Color(0xFF101018),
+                onBackground = Color(0xFFE6E4FF),
+                onSurface = Color(0xFFE6E4FF),
+                onSurfaceVariant = Color(0xFF8E8AB0),
+                outline = Color(0xFF232338),
+                moodColors = listOf(
+                    Color(0xFFFF5C8A), Color(0xFFFFB74D), Color(0xFF4DD0E1),
+                    Color(0xFF69F0AE), Color(0xFF8F7BFF),
+                ),
+            ),
+            ThemePalette(
+                key = ThemeKey.FROST,
+                isDark = false,
+                primary = Color(0xFF2E6FB7),
+                background = Color(0xFFF2F7FC),
+                surface = Color(0xFFFFFFFF),
+                onBackground = Color(0xFF1B2A3A),
+                onSurface = Color(0xFF1B2A3A),
+                onSurfaceVariant = Color(0xFF5E7488),
+                outline = Color(0xFFC9D9E8),
+                moodColors = listOf(
+                    Color(0xFFD35450), Color(0xFFE8912D), Color(0xFFD9C34A),
+                    Color(0xFF4D9E6A), Color(0xFF2E6FB7),
+                ),
+            ),
         )
 
-        fun byKey(key: String): ThemePalette =
-            presets.firstOrNull { it.key.name == key } ?: presets.first()
+        fun byKey(key: String, customAccent: Long = 0xFFFFB74D, customBackground: Long = 0xFF121212): ThemePalette =
+            when (key) {
+                ThemeKey.CUSTOM.name -> custom(customAccent, customBackground)
+                ThemeKey.AUTO.name -> presets.first() // AUTO резолвится в MainActivity
+                else -> presets.firstOrNull { it.key.name == key } ?: presets.first()
+            }
+
+        /** Кастомная тема: пользовательские акцент и фон, остальное выводим из яркости. */
+        fun custom(accentArgb: Long, backgroundArgb: Long): ThemePalette {
+            val accent = Color(accentArgb)
+            val background = Color(backgroundArgb)
+            val dark = luminance(background) < 0.35f
+            val surface = if (dark) {
+                Color(
+                    red = (background.red * 0.7f + accent.red * 0.12f).coerceIn(0f, 1f),
+                    green = (background.green * 0.7f + accent.green * 0.12f).coerceIn(0f, 1f),
+                    blue = (background.blue * 0.7f + accent.blue * 0.12f).coerceIn(0f, 1f),
+                )
+            } else {
+                Color(
+                    red = (background.red * 0.55f + 0.45f).coerceIn(0f, 1f),
+                    green = (background.green * 0.55f + 0.45f).coerceIn(0f, 1f),
+                    blue = (background.blue * 0.55f + 0.45f).coerceIn(0f, 1f),
+                )
+            }
+            val onBg = if (dark) Color(0xFFECEAE4) else Color(0xFF2B2620)
+            val variant = if (dark) Color(0xFF9E9890) else Color(0xFF7A7064)
+            val outline = if (dark) {
+                Color(
+                    red = (background.red * 0.4f + accent.red * 0.08f).coerceIn(0f, 1f),
+                    green = (background.green * 0.4f + accent.green * 0.08f).coerceIn(0f, 1f),
+                    blue = (background.blue * 0.4f + accent.blue * 0.08f).coerceIn(0f, 1f),
+                )
+            } else {
+                Color(
+                    red = (background.red * 0.6f + 0.3f).coerceIn(0f, 1f),
+                    green = (background.green * 0.6f + 0.3f).coerceIn(0f, 1f),
+                    blue = (background.blue * 0.6f + 0.3f).coerceIn(0f, 1f),
+                )
+            }
+            return ThemePalette(
+                key = ThemeKey.CUSTOM,
+                isDark = dark,
+                primary = accent,
+                background = background,
+                surface = surface,
+                onBackground = onBg,
+                onSurface = onBg,
+                onSurfaceVariant = variant,
+                outline = outline,
+                moodColors = listOf(
+                    Color(0xFFE57373), Color(0xFFFFB74D), Color(0xFFFFF176),
+                    Color(0xFF81C784), Color(0xFF4FC3F7),
+                ),
+            )
+        }
+
+        /** Относительная светлость (0..1) по модели sRGB. */
+        private fun luminance(color: Color): Float =
+            0.2126f * color.red + 0.7152f * color.green + 0.0722f * color.blue
     }
 }

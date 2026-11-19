@@ -1,5 +1,6 @@
 package ru.echoapp.ui.feed
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -36,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
@@ -53,7 +57,9 @@ import kotlinx.coroutines.launch
 import ru.echoapp.EchoApp
 import ru.echoapp.R
 import ru.echoapp.audio.AudioPlayer
+import ru.echoapp.audio.WaveformExtractor
 import ru.echoapp.data.RecordingEntity
+import ru.echoapp.ui.common.WaveformBar
 import ru.echoapp.util.AnniversaryDates
 import ru.echoapp.util.Mood
 
@@ -65,8 +71,10 @@ fun FeedScreen(app: EchoApp, onOpenRecording: (Long) -> Unit) {
     val player = remember { AudioPlayer() }
     val playback by player.state.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val locale = LocalConfiguration.current.locales.get(0)
     val now = System.currentTimeMillis()
+    var levelsMap by remember { mutableStateOf(mapOf<Long, List<Int>>()) }
 
     DisposableEffect(Unit) {
         onDispose { player.stop() }
@@ -116,8 +124,26 @@ fun FeedScreen(app: EchoApp, onOpenRecording: (Long) -> Unit) {
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
                 items(recordings, key = { it.id }) { recording ->
+                    val showWave = recording.kind != "letter" &&
+                        (recording.sealedUntil == null || recording.sealedUntil <= now)
+                    val levels = levelsMap[recording.id]
+                    LaunchedEffect(recording.id, recording.waveform) {
+                        if (showWave && levels == null) {
+                            val stored = recording.waveform
+                            if (stored != null) {
+                                levelsMap = levelsMap + (recording.id to WaveformExtractor.parse(stored))
+                            } else {
+                                val extracted = WaveformExtractor.extract(recording.filePath)
+                                if (extracted != null) {
+                                    app.repository.updateWaveform(recording.id, extracted)
+                                    levelsMap = levelsMap + (recording.id to WaveformExtractor.parse(extracted))
+                                }
+                            }
+                        }
+                    }
                     RecordingCard(
                         recording = recording,
+                        levels = levels.orEmpty(),
                         isPlaying = playback.recordingId == recording.id && playback.isPlaying,
                         locale = locale,
                         hidePreview = settings?.hidePreviews == true,
@@ -130,7 +156,18 @@ fun FeedScreen(app: EchoApp, onOpenRecording: (Long) -> Unit) {
                             }
                         },
                         onOpen = { onOpenRecording(recording.id) },
-                        onDelete = { scope.launch { app.repository.deleteRecording(recording) } },
+                        onDelete = {
+                            scope.launch {
+                                val deleted = app.repository.deleteRecording(recording)
+                                if (!deleted) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.delete_blocked_sealed,
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            }
+                        },
                         modifier = Modifier.animateItem(),
                     )
                 }
@@ -142,6 +179,7 @@ fun FeedScreen(app: EchoApp, onOpenRecording: (Long) -> Unit) {
 @Composable
 private fun RecordingCard(
     recording: RecordingEntity,
+    levels: List<Int>,
     isPlaying: Boolean,
     locale: java.util.Locale,
     hidePreview: Boolean,
@@ -151,6 +189,7 @@ private fun RecordingCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isLetter = recording.kind == "letter"
     Card(
         modifier = modifier.fillMaxWidth().clickable(onClick = onOpen),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -159,11 +198,12 @@ private fun RecordingCard(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onPlayToggle, enabled = !isSealed) {
+            IconButton(onClick = onPlayToggle, enabled = !isSealed && !isLetter) {
                 Crossfade(targetState = isPlaying, label = "play") { playing ->
                     Icon(
                         imageVector = when {
                             isSealed -> Icons.Filled.Lock
+                            isLetter -> Icons.Filled.MailOutline
                             playing -> Icons.Filled.Pause
                             else -> Icons.Filled.PlayArrow
                         },
@@ -206,13 +246,13 @@ private fun RecordingCard(
                 }
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text = if (isSealed) {
-                        stringResource(
+                    text = when {
+                        isSealed -> stringResource(
                             R.string.sealed_badge,
                             AnniversaryDates.formatShortDate(recording.sealedUntil!!, locale),
                         )
-                    } else {
-                        recording.transcript?.takeIf { it.isNotBlank() && !hidePreview }
+                        isLetter -> stringResource(R.string.feed_letter_badge)
+                        else -> recording.transcript?.takeIf { it.isNotBlank() && !hidePreview }
                             ?: AnniversaryDates.formatElapsed(recording.durationMs)
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -220,6 +260,14 @@ private fun RecordingCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (levels.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    WaveformBar(
+                        levels = levels,
+                        modifier = Modifier.fillMaxWidth().height(28.dp),
+                        progress = if (isPlaying) 1f else null,
+                    )
+                }
             }
             IconButton(onClick = onDelete) {
                 Icon(

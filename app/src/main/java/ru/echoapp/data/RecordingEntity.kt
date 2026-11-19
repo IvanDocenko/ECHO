@@ -19,4 +19,10 @@ data class RecordingEntity(
     val transcript: String? = null,
     /** Если > now — запись запечатана и недоступна для прослушивания до этой даты. */
     val sealedUntil: Long? = null,
+    /** Запретить удаление, пока запись запечатана (расширение капсул). */
+    val sealedNoDelete: Boolean = false,
+    /** Тип записи: "record" (аудио) или "letter" (текстовое письмо за год). */
+    val kind: String = "record",
+    /** Реальные амплитуды записи (0..32767 через запятую) для waveform; null у старых записей. */
+    val waveform: String? = null,
 )
